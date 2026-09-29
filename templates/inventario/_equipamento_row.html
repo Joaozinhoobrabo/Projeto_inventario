@@ -1,0 +1,10 @@
+<li>
+  <span class="equipment-name">{{ equipamento.nome }}</span>
+  <span class="equipment-serial">{% if equipamento.numero_serie %}Série {{ equipamento.numero_serie }}{% else %}Sem número de série{% endif %}</span>
+  {% if frota.status_inventario == 'INVENTARIADA' %}
+    <form method="post" action="{% url 'equipamento_remover' equipamento.id %}" onsubmit="return confirm('Remover {{ equipamento.nome|escapejs }} da frota {{ frota.numero_frota }}? Esta ação ficará no histórico.')">
+      {% csrf_token %}
+      <button class="remove-equipment-button" type="submit" aria-label="Remover {{ equipamento.nome }} da frota {{ frota.numero_frota }}" title="Remover equipamento">Remover</button>
+    </form>
+  {% endif %}
+</li>

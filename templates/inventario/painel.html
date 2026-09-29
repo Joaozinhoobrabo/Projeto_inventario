@@ -1,0 +1,148 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173c34">
+  <title>Painel · Inventário Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'inventario/css/site.css' %}">
+</head>
+<body class="dashboard-page">
+  <header class="dashboard-header">
+    <a class="wordmark dashboard-wordmark" href="{% url 'inicio' %}">
+      <span class="wordmark-icon" aria-hidden="true">II</span>
+      <span>INVENTÁRIO<span class="wordmark-light"> INTELIGENTE</span></span>
+    </a>
+    <form method="post" action="{% url 'selecionar_perfil' %}" class="profile-switch-form">
+      {% csrf_token %}
+      <button class="profile-switch" type="submit" name="perfil" value="{% if perfil == 'ADMIN' %}USUARIO{% else %}ADMIN{% endif %}">Perfil: {{ perfil }} <span aria-hidden="true">↗</span></button>
+    </form>
+  </header>
+  <main class="dashboard-main">
+    {% if messages %}
+      <ul class="message-list" aria-live="polite">
+        {% for message in messages %}<li class="message-item message-{{ message.tags }}">{{ message }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <p class="eyebrow eyebrow-green">VISÃO GERAL <span>PERFIL {{ perfil }}</span></p>
+    <h1>Inventário de frotas</h1>
+    <p class="dashboard-description">Consulte uma frota e acompanhe o andamento do inventário da equipe.</p>
+    {% if perfil == 'ADMIN' %}<a class="primary-action" href="{% url 'frota_nova' %}">+ Cadastrar frota</a>{% endif %}
+
+    <section class="stats-grid" aria-label="Resumo do inventário">
+      <div class="stat-item"><span>Total de frotas</span><strong>{{ total_frotas }}</strong></div>
+      <div class="stat-item"><span>Inventariadas</span><strong class="stat-complete">{{ inventariadas }}</strong></div>
+      <div class="stat-item"><span>Pendentes</span><strong class="stat-pending">{{ pendentes }}</strong></div>
+      <div class="stat-item"><span>Concluído</span><strong>{{ percentual }}%</strong></div>
+    </section>
+
+    <section class="inventory-query" aria-labelledby="search-title">
+      <div class="section-heading">
+        <div><p class="eyebrow eyebrow-green">CONSULTA RÁPIDA</p><h2 id="search-title">Encontre uma frota</h2></div>
+      </div>
+      <form class="fleet-search" method="get" action="{% url 'painel' %}">
+        <label class="visually-hidden" for="fleet-query">Número da frota</label>
+        <input id="fleet-query" name="q" type="search" value="{{ consulta }}" placeholder="Digite o número da frota" required>
+        <button type="submit">Pesquisar <span aria-hidden="true">→</span></button>
+      </form>
+    </section>
+
+    {% if consulta %}
+      <section class="fleet-result" aria-live="polite">
+        {% if frota %}
+          <div class="result-heading">
+            <div><p class="eyebrow eyebrow-green">FROTA CADASTRADA</p><h2>Frota {{ frota.numero_frota }}</h2></div>
+            {% if frota.status_inventario == 'INVENTARIADA' %}
+              <span class="status-badge status-done">Inventariada</span>
+            {% else %}
+              <span class="status-badge status-pending">Pendente</span>
+            {% endif %}
+          </div>
+          {% if frota.descricao %}<p class="fleet-description">{{ frota.descricao }}</p>{% endif %}
+          {% if frota.status_inventario == 'INVENTARIADA' %}
+            <p class="inventory-meta">Inventariada em {{ frota.data_inventario|date:'d/m/Y H:i' }} · Perfil selecionado: {{ frota.perfil_inventariado_por }}</p>
+            <form class="inventory-toggle-form" method="post" action="{% url 'alternar_inventario' frota.id %}" onsubmit="return confirm('Desinventariar a frota {{ frota.numero_frota }}? Ela voltará para pendente.')">
+              {% csrf_token %}
+              <button class="undo-button" type="submit">Desinventariar frota</button>
+            </form>
+          {% else %}
+            <form class="inventory-complete-form" method="post" action="{% url 'alternar_inventario' frota.id %}" onsubmit="return confirm('Confirma que todos os equipamentos da frota {{ frota.numero_frota }} foram inventariados?')">
+              {% csrf_token %}
+              <button class="complete-button" type="submit">✓ Inventariar frota</button>
+            </form>
+          {% endif %}
+          {% if perfil == 'ADMIN' %}
+            <div class="fleet-admin-actions"><a href="{% url 'frota_editar' frota.id %}">Editar frota e equipamentos</a><a href="{% url 'frota_excluir' frota.id %}">Excluir frota</a></div>
+          {% endif %}
+          <div class="equipment-heading"><h3>Equipamentos</h3><span>{{ frota.equipamentos.all|length }}</span></div>
+          {% if frota.equipamentos.all %}
+            <ul class="equipment-list">
+              {% for equipamento in frota.equipamentos.all %}
+                {% include 'inventario/_equipamento_row.html' with frota=frota equipamento=equipamento %}
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty-inline">Nenhum equipamento cadastrado nesta frota.</p>
+          {% endif %}
+        {% else %}
+          <div class="not-found"><span aria-hidden="true">!</span><div><h2>Frota {{ consulta }} não encontrada</h2><p>Essa frota não está cadastrada no sistema.</p></div></div>
+        {% endif %}
+      </section>
+    {% endif %}
+
+    <section class="pending-section" aria-labelledby="pending-title">
+      <div class="section-heading"><div><p class="eyebrow eyebrow-green">ACOMPANHAMENTO</p><h2 id="pending-title">Frotas pendentes</h2></div><span class="section-count">{{ pendentes }}</span></div>
+      {% if frotas_pendentes %}
+        <ul class="pending-list">
+          {% for frota_pendente in frotas_pendentes %}
+            <li><a href="{% url 'painel' %}?q={{ frota_pendente.numero_frota }}"><span class="pending-number">{{ frota_pendente.numero_frota }}</span><span class="pending-description">{{ frota_pendente.descricao|default:'Sem descrição' }}</span><span class="pending-equipment-count">{{ frota_pendente.equipamentos.all|length }} equipamentos</span><span class="pending-arrow" aria-hidden="true">→</span></a></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-inline">Não há frotas pendentes.</p>
+      {% endif %}
+    </section>
+
+    <section class="completed-section" aria-labelledby="completed-title">
+      <div class="section-heading"><div><p class="eyebrow eyebrow-green">CONSULTA DA EQUIPE</p><h2 id="completed-title">Frotas inventariadas</h2></div><span class="section-count">{{ inventariadas }}</span></div>
+      {% if frotas_inventariadas %}
+        <div class="completed-fleet-list">
+          {% for frota_inventariada in frotas_inventariadas %}
+            <details class="completed-fleet">
+              <summary>
+                <span class="completed-fleet-title">Frota {{ frota_inventariada.numero_frota }}</span>
+                <span class="completed-fleet-meta">{{ frota_inventariada.equipamentos.all|length }} equipamentos</span>
+                <span class="completed-fleet-meta">{{ frota_inventariada.data_inventario|date:'d/m/Y H:i' }}</span>
+                <span class="pending-arrow" aria-hidden="true">⌄</span>
+              </summary>
+              {% if frota_inventariada.descricao %}<p class="fleet-description">{{ frota_inventariada.descricao }}</p>{% endif %}
+              <p class="inventory-meta">Concluída pelo perfil selecionado: {{ frota_inventariada.perfil_inventariado_por }}</p>
+              <form class="inventory-toggle-form" method="post" action="{% url 'alternar_inventario' frota_inventariada.id %}" onsubmit="return confirm('Desinventariar a frota {{ frota_inventariada.numero_frota }}? Ela voltará para pendente.')">
+                {% csrf_token %}
+                <button class="undo-button" type="submit">Desinventariar frota</button>
+              </form>
+              {% if frota_inventariada.equipamentos.all %}
+                <ul class="equipment-list">
+                  {% for equipamento in frota_inventariada.equipamentos.all %}
+                    {% include 'inventario/_equipamento_row.html' with frota=frota_inventariada equipamento=equipamento %}
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="empty-inline">Todos os equipamentos desta frota foram removidos.</p>
+              {% endif %}
+            </details>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-inline">Ainda não há frotas inventariadas.</p>
+      {% endif %}
+    </section>
+
+    <a class="back-link" href="{% url 'inicio' %}">Voltar para a seleção de perfil <span aria-hidden="true">→</span></a>
+  </main>
+</body>
+</html>

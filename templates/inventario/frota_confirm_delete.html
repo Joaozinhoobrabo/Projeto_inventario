@@ -1,0 +1,24 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173c34">
+  <title>Excluir frota · Inventário Inteligente</title>
+  <link rel="stylesheet" href="{% static 'inventario/css/site.css' %}">
+</head>
+<body class="dashboard-page">
+  <header class="dashboard-header"><a class="wordmark dashboard-wordmark" href="{% url 'painel' %}"><span class="wordmark-icon" aria-hidden="true">II</span><span>INVENTÁRIO<span class="wordmark-light"> INTELIGENTE</span></span></a></header>
+  <main class="dashboard-main delete-main">
+    <p class="eyebrow eyebrow-green">EXCLUSÃO</p>
+    <h1>Excluir frota {{ frota.numero_frota }}?</h1>
+    <p class="dashboard-description">Os {{ frota.equipamentos.count }} equipamentos desta frota também serão excluídos. Registros de histórico serão preservados.</p>
+    <form method="post" class="form-actions">
+      {% csrf_token %}
+      <a class="back-link" href="{% url 'painel' %}?q={{ frota.numero_frota }}">Cancelar</a>
+      <button class="delete-button" type="submit">Excluir frota</button>
+    </form>
+  </main>
+</body>
+</html>

@@ -1,0 +1,63 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173c34">
+  <title>Inventário Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'inventario/css/site.css' %}">
+</head>
+<body>
+  <main class="entry-layout">
+    <section class="intro-panel" aria-labelledby="brand-title">
+      <a class="wordmark" href="{% url 'inicio' %}" aria-label="Inventário Inteligente, início">
+        <span class="wordmark-icon" aria-hidden="true">II</span>
+        <span>INVENTÁRIO<span class="wordmark-light"> INTELIGENTE</span></span>
+      </a>
+      <div class="intro-copy">
+        <p class="eyebrow">CONTROLE DE FROTAS</p>
+        <h1 id="brand-title">Tudo em ordem.<br><span>Frota por frota.</span></h1>
+        <p class="intro-description">Consulte equipamentos e acompanhe o inventário da sua equipe em um só lugar.</p>
+      </div>
+      <div class="intro-footer"><span class="status-dot"></span> CONTROLE COMPARTILHADO DA EQUIPE</div>
+      <div class="line-art" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </section>
+
+    <section class="choice-panel" aria-labelledby="choice-title">
+      <div class="choice-content">
+        <p class="eyebrow eyebrow-green">ACESSO AO SISTEMA <span>01 / 02</span></p>
+        <h2 id="choice-title">Quem deseja entrar?</h2>
+        <p class="choice-description">Escolha um perfil para continuar.</p>
+
+        <div class="profile-options">
+          <form method="post" action="{% url 'selecionar_perfil' %}">
+            {% csrf_token %}
+            <input type="hidden" name="perfil" value="ADMIN">
+            <button class="profile-option admin-option" type="submit">
+              <span class="profile-topline"><span class="profile-icon" aria-hidden="true">A</span><span class="option-arrow" aria-hidden="true">↗</span></span>
+              <span class="profile-name">Admin</span>
+              <span class="profile-detail">Gestão do inventário</span>
+            </button>
+          </form>
+          <form method="post" action="{% url 'selecionar_perfil' %}">
+            {% csrf_token %}
+            <input type="hidden" name="perfil" value="USUARIO">
+            <button class="profile-option user-option" type="submit">
+              <span class="profile-topline"><span class="profile-icon" aria-hidden="true">U</span><span class="option-arrow" aria-hidden="true">↗</span></span>
+              <span class="profile-name">Usuário</span>
+              <span class="profile-detail">Consulta e inventário</span>
+            </button>
+          </form>
+        </div>
+
+        <p class="security-note"><span aria-hidden="true">i</span> O perfil escolhido só define a experiência no site. Ele não confirma a identidade de quem está acessando.</p>
+      </div>
+      <footer class="page-footer"><span>INVENTÁRIO INTELIGENTE</span><span>VERSÃO INICIAL · 2026</span></footer>
+    </section>
+  </main>
+</body>
+</html>

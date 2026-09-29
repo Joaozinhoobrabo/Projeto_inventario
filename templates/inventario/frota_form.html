@@ -1,0 +1,95 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173c34">
+  <title>{{ titulo }} · Inventário Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'inventario/css/site.css' %}">
+</head>
+<body class="dashboard-page">
+  <header class="dashboard-header">
+    <a class="wordmark dashboard-wordmark" href="{% url 'painel' %}"><span class="wordmark-icon" aria-hidden="true">II</span><span>INVENTÁRIO<span class="wordmark-light"> INTELIGENTE</span></span></a>
+    <a class="profile-switch" href="{% url 'painel' %}">Voltar ao painel <span aria-hidden="true">↗</span></a>
+  </header>
+  <main class="dashboard-main form-main">
+    <p class="eyebrow eyebrow-green">GESTÃO DE FROTAS <span>ADMIN</span></p>
+    <h1>{{ titulo }}</h1>
+    {% if messages %}<ul class="message-list">{% for message in messages %}<li class="message-item message-{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>{% endif %}
+    <form method="post" class="fleet-form">
+      {% csrf_token %}
+      {% if frota_form.non_field_errors %}<div class="form-errors">{{ frota_form.non_field_errors }}</div>{% endif %}
+      <div class="form-section">
+        <p class="eyebrow eyebrow-green">IDENTIFICAÇÃO</p>
+        {% for field in frota_form %}
+          <div class="form-field{% if field.errors %} has-errors{% endif %}">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="form-section equipment-form-section">
+        <div class="section-heading"><div><p class="eyebrow eyebrow-green">ITENS DA FROTA</p><h2>Equipamentos</h2></div></div>
+        {{ equipamento_formset.management_form }}
+        {% if equipamento_formset.non_form_errors %}<div class="form-errors">{{ equipamento_formset.non_form_errors }}</div>{% endif %}
+        <div id="equipment-forms">
+          {% for form in equipamento_formset %}
+            <div class="equipment-form-row" data-equipment-form>
+              {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+              {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+              <div class="equipment-fields">
+                {% for field in form.visible_fields %}
+                  {% if field.name != 'DELETE' %}
+                    <div class="form-field{% if field.errors %} has-errors{% endif %}">
+                      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                      {{ field }}
+                      {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% if form.DELETE %}<div class="delete-equipment-field">{{ form.DELETE }}<label for="{{ form.DELETE.id_for_label }}">Remover este equipamento</label></div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <template id="empty-equipment-form">
+          <div class="equipment-form-row" data-equipment-form>
+            {% with form=equipamento_formset.empty_form %}
+              {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+              <div class="equipment-fields">
+                {% for field in form.visible_fields %}
+                  {% if field.name != 'DELETE' %}<div class="form-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>{% endif %}
+                {% endfor %}
+              </div>
+              {% if form.DELETE %}<div class="delete-equipment-field">{{ form.DELETE }}<label for="{{ form.DELETE.id_for_label }}">Remover este equipamento</label></div>{% endif %}
+            {% endwith %}
+          </div>
+        </template>
+        <button class="add-equipment-button" type="button" id="add-equipment">+ Adicionar equipamento</button>
+      </div>
+
+      <p class="form-note">A frota será salva como pendente. O status vale para todos os equipamentos juntos.</p>
+      <div class="form-actions"><a class="back-link" href="{% url 'painel' %}">Cancelar</a><button class="complete-button" type="submit">Salvar frota</button></div>
+    </form>
+  </main>
+  <script>
+    const addEquipmentButton = document.getElementById('add-equipment');
+    const equipmentForms = document.getElementById('equipment-forms');
+    const totalForms = document.getElementById('id_equipamentos-TOTAL_FORMS');
+    const emptyEquipmentForm = document.getElementById('empty-equipment-form');
+
+    addEquipmentButton.addEventListener('click', () => {
+      const formIndex = Number(totalForms.value);
+      const newForm = emptyEquipmentForm.innerHTML.replaceAll('__prefix__', formIndex);
+      equipmentForms.insertAdjacentHTML('beforeend', newForm);
+      totalForms.value = formIndex + 1;
+    });
+  </script>
+</body>
+</html>
